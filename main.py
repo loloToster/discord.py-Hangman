@@ -13,7 +13,7 @@ def createIfNotExist(file, value):
 
 dataJSON = f"{root}/files/data.json"
 usedwordsJSON = f"{root}/files/usedwords.json"
-createIfNotExist(dataJSON, {"prefix": ".", "hangman_channel": None})
+createIfNotExist(dataJSON, {"prefix": ".", "channel": None})
 createIfNotExist(usedwordsJSON, [])
 
 

@@ -43,6 +43,8 @@ root = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/") + "/.."
 class Hangman(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        with open(f"{root}/files/data.json") as f:
+            self.channel = json.load(f)["channel"]
         self.setDefault()
 
     def setDefault(self):
@@ -109,18 +111,25 @@ class Hangman(commands.Cog):
         return False
 
     @commands.guild_only()
-    @commands.command()
+    @commands.command()  # todo: only for admins
     async def setChannel(self, ctx: commands.Context, channel: TextChannel = None):
         if not channel:
             channel = ctx.channel
         with open(f"{root}/files/data.json", "r+") as f:
             dataJSON = json.load(f)
-            dataJSON["hangman_channel"] = channel.id
+            dataJSON["channel"] = channel.id
             f.seek(0)
             json.dump(dataJSON, f, indent=2)
             f.truncate()
+        self.channel = channel.id
+        await ctx.send(f"{channel.mention} set as hangman channel")
 
-    @commands.guild_only()
+    @commands.command()
+    async def clearUsedWords(self, ctx: commands.Context):
+        with open(f"{root}/files/usedwords.json", "w") as f:
+            f.write("[]")
+        await ctx.send("Cleared used words")
+
     @commands.command(aliases=["w"])
     async def word(self, ctx: commands.Context, *, word: str = None):
         self.setDefault()
@@ -153,6 +162,8 @@ class Hangman(commands.Cog):
         if len(guess) < 2:
             if not guess in acceptedLetters:
                 return await ctx.send(f"**{guess}** is not a letter")
+            if guess in self.guessedLetters:
+                return await ctx.send(f"**{guess}** was already guessed")
             self.guessedLetters.append(guess)
             if self.allGuessed():
                 await ctx.send(
