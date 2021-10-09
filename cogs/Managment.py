@@ -13,6 +13,7 @@ class Settings(commands.Cog):
     async def ping(self, ctx):
         await ctx.send("Pong")
 
+    @commands.has_permissions(administrator=True)
     @commands.command()
     async def prefix(self, ctx, newPrefix: str):
         with open(f"{root}/files/data.json", "r+") as f:

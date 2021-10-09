@@ -104,14 +104,15 @@ class Hangman(commands.Cog):
 
     async def checkForLoss(self, ctx):
         if self.attempts <= 0:
-            await ctx.send("", embed=self.createEmbed())
+            await ctx.send(embed=self.createEmbed())
             await ctx.send(f"The word was **{self.currentWord}**")
             self.setDefault()
             return True
         return False
 
+    @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    @commands.command()  # todo: only for admins
+    @commands.command()
     async def setChannel(self, ctx: commands.Context, channel: TextChannel = None):
         if not channel:
             channel = ctx.channel
@@ -124,6 +125,7 @@ class Hangman(commands.Cog):
         self.channel = channel.id
         await ctx.send(f"{channel.mention} set as hangman channel")
 
+    @commands.has_permissions(administrator=True)
     @commands.command()
     async def unsetChannel(self, ctx: commands.Context):
         with open(f"{root}/files/data.json", "r+") as f:
@@ -136,6 +138,7 @@ class Hangman(commands.Cog):
         self.channel = None
         await ctx.send(f"{channel.mention} is no longer the hangman channel")
 
+    @commands.has_permissions(administrator=True)
     @commands.command()
     async def clearUsedWords(self, ctx: commands.Context):
         with open(f"{root}/files/usedwords.json", "w") as f:
@@ -178,7 +181,7 @@ class Hangman(commands.Cog):
                 json.dump(usedWords, f, indent=2)
         self.currentWord = word
         print(word)
-        await targetChannel.send("", embed=self.createEmbed())
+        await targetChannel.send(embed=self.createEmbed())
 
     @commands.guild_only()
     @commands.command(aliases=["g"])
@@ -224,7 +227,7 @@ class Hangman(commands.Cog):
                 )
                 self.setDefault()
                 return
-        await targetChannel.send("", embed=self.createEmbed())
+        await targetChannel.send(embed=self.createEmbed())
 
 
 def setup(bot):
