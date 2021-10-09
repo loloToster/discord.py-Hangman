@@ -125,6 +125,18 @@ class Hangman(commands.Cog):
         await ctx.send(f"{channel.mention} set as hangman channel")
 
     @commands.command()
+    async def unsetChannel(self, ctx: commands.Context):
+        with open(f"{root}/files/data.json", "r+") as f:
+            dataJSON = json.load(f)
+            dataJSON["channel"] = None
+            f.seek(0)
+            json.dump(dataJSON, f, indent=2)
+            f.truncate()
+        channel = self.bot.get_channel(self.channel)
+        self.channel = None
+        await ctx.send(f"{channel.mention} is no longer the hangman channel")
+
+    @commands.command()
     async def clearUsedWords(self, ctx: commands.Context):
         with open(f"{root}/files/usedwords.json", "w") as f:
             f.write("[]")
@@ -132,10 +144,27 @@ class Hangman(commands.Cog):
 
     @commands.command(aliases=["w"])
     async def word(self, ctx: commands.Context, *, word: str = None):
+        targetChannel = (
+            self.bot.get_channel(self.channel) if self.channel else ctx.channel
+        )
+        if ctx.guild is None:
+            if not self.channel:
+                return await ctx.send(
+                    "please specify hangman channel to send words in dms"
+                )
+        elif self.channel:
+            if ctx.channel.id != self.channel:
+                return await ctx.send(
+                    "this command can only be used on hangman channel or in dms"
+                )
+        if word:
+            await ctx.message.delete()
         self.setDefault()
         if word:
             if len(word) < 2:
-                return await ctx.send("Word need to have at least two letters")
+                return await targetChannel.send(
+                    "Word need to have at least two letters"
+                )
             word = word.upper()
         else:
             with open(f"{root}/files/words.json") as f:
@@ -149,24 +178,31 @@ class Hangman(commands.Cog):
                 json.dump(usedWords, f, indent=2)
         self.currentWord = word
         print(word)
-        await ctx.send("", embed=self.createEmbed())
+        await targetChannel.send("", embed=self.createEmbed())
 
     @commands.guild_only()
     @commands.command(aliases=["g"])
     async def guess(self, ctx: commands.Context, *, guess: str = None):
+        targetChannel = (
+            self.bot.get_channel(self.channel) if self.channel else ctx.channel
+        )
+        if self.channel and self.channel != ctx.channel.id:
+            return await ctx.send("this command can only be used on hangman channel")
         if not guess:
-            return await ctx.send("guess is a required argument that is missing")
+            return await targetChannel.send(
+                "guess is a required argument that is missing"
+            )
         if not self.currentWord:
-            return await ctx.send("please set the word")
+            return await targetChannel.send("please set the word")
         guess = guess.upper()
         if len(guess) < 2:
             if not guess in acceptedLetters:
-                return await ctx.send(f"**{guess}** is not a letter")
+                return await targetChannel.send(f"**{guess}** is not a letter")
             if guess in self.guessedLetters:
-                return await ctx.send(f"**{guess}** was already guessed")
+                return await targetChannel.send(f"**{guess}** was already guessed")
             self.guessedLetters.append(guess)
             if self.allGuessed():
-                await ctx.send(
+                await targetChannel.send(
                     f"Congratulations {ctx.author.mention}! The word was **{self.currentWord}**"
                 )
                 self.setDefault()
@@ -178,17 +214,17 @@ class Hangman(commands.Cog):
                     return
         else:
             if guess != self.currentWord:
-                await ctx.send(f"**{guess}** is not the word")
+                await targetChannel.send(f"**{guess}** is not the word")
                 self.attempts -= 1
                 if await self.checkForLoss(ctx):
                     return
             else:
-                await ctx.send(
+                await targetChannel.send(
                     f"Congratulations {ctx.author.mention}! The word was **{self.currentWord}**"
                 )
                 self.setDefault()
                 return
-        await ctx.send("", embed=self.createEmbed())
+        await targetChannel.send("", embed=self.createEmbed())
 
 
 def setup(bot):

@@ -2,7 +2,7 @@ from discord.ext import commands
 import os
 import json
 
-root = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
+root = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/") + "/.."
 
 
 class Settings(commands.Cog):
@@ -10,12 +10,17 @@ class Settings(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def prefix(self, ctx, newPrefix):
-        with open("") as f:
-            data = json.load(f)
-        data["prefix"] = newPrefix
-        with open(f"{root}/files/data.json", "w") as f:
-            json.dump(data, f, indent=2)
+    async def ping(self, ctx):
+        await ctx.send("Pong")
+
+    @commands.command()
+    async def prefix(self, ctx, newPrefix: str):
+        with open(f"{root}/files/data.json", "r+") as f:
+            dataJSON = json.load(f)
+            dataJSON["prefix"] = newPrefix
+            f.seek(0)
+            json.dump(dataJSON, f, indent=2)
+            f.truncate()
         await ctx.send(f"Changing prefix to `{newPrefix}`")
 
     @commands.command()
