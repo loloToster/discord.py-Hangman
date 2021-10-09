@@ -112,7 +112,11 @@ class Hangman(commands.Cog):
 
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
-    @commands.command()
+    @commands.command(
+        aliases=["sc"],
+        brief="sets the hangman channel",
+        description="Sets the hangman channel. I no channel provided sets the channel that the message was sent on.",
+    )
     async def setChannel(self, ctx: commands.Context, channel: TextChannel = None):
         if not channel:
             channel = ctx.channel
@@ -126,7 +130,7 @@ class Hangman(commands.Cog):
         await ctx.send(f"{channel.mention} set as hangman channel")
 
     @commands.has_permissions(administrator=True)
-    @commands.command()
+    @commands.command(aliases=["uc"], brief="unsets the hangman channel")
     async def unsetChannel(self, ctx: commands.Context):
         with open(f"{root}/files/data.json", "r+") as f:
             dataJSON = json.load(f)
@@ -139,13 +143,21 @@ class Hangman(commands.Cog):
         await ctx.send(f"{channel.mention} is no longer the hangman channel")
 
     @commands.has_permissions(administrator=True)
-    @commands.command()
+    @commands.command(
+        aliases=["cuw"],
+        brief="clears the usedwords list",
+        description="This bot uses a list to keep track of what words from the list of random words were already used to not repeat the words. If you want to reset this list use this command.",
+    )
     async def clearUsedWords(self, ctx: commands.Context):
         with open(f"{root}/files/usedwords.json", "w") as f:
             f.write("[]")
         await ctx.send("Cleared used words")
 
-    @commands.command(aliases=["w"])
+    @commands.command(
+        aliases=["w"],
+        brief="command for setting the word",
+        description="Sets the word. If no word provided sets a random word from the list.",
+    )
     async def word(self, ctx: commands.Context, *, word: str = None):
         targetChannel = (
             self.bot.get_channel(self.channel) if self.channel else ctx.channel
@@ -184,7 +196,7 @@ class Hangman(commands.Cog):
         await targetChannel.send(embed=self.createEmbed())
 
     @commands.guild_only()
-    @commands.command(aliases=["g"])
+    @commands.command(aliases=["g"], brief="command for guessing the word or a letter")
     async def guess(self, ctx: commands.Context, *, guess: str = None):
         targetChannel = (
             self.bot.get_channel(self.channel) if self.channel else ctx.channel
