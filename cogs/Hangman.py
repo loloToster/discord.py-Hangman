@@ -1,4 +1,5 @@
 from discord import Embed
+from discord import TextChannel
 from discord.ext import commands
 
 import os
@@ -93,7 +94,7 @@ class Hangman(commands.Cog):
     def allGuessed(self):
         allGuessed = True
         for letter in self.currentWord:
-            if letter in self.guessedLetters:
+            if letter in self.guessedLetters or not letter in acceptedLetters:
                 continue
             allGuessed = False
             break
@@ -106,6 +107,18 @@ class Hangman(commands.Cog):
             self.setDefault()
             return True
         return False
+
+    @commands.guild_only()
+    @commands.command()
+    async def setChannel(self, ctx: commands.Context, channel: TextChannel = None):
+        if not channel:
+            channel = ctx.channel
+        with open(f"{root}/files/data.json", "r+") as f:
+            dataJSON = json.load(f)
+            dataJSON["hangman_channel"] = channel.id
+            f.seek(0)
+            json.dump(dataJSON, f, indent=2)
+            f.truncate()
 
     @commands.guild_only()
     @commands.command(aliases=["w"])
@@ -138,6 +151,8 @@ class Hangman(commands.Cog):
             return await ctx.send("please set the word")
         guess = guess.upper()
         if len(guess) < 2:
+            if not guess in acceptedLetters:
+                return await ctx.send(f"**{guess}** is not a letter")
             self.guessedLetters.append(guess)
             if self.allGuessed():
                 await ctx.send(

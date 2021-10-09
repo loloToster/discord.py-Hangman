@@ -18,6 +18,10 @@ class Settings(commands.Cog):
             json.dump(data, f, indent=2)
         await ctx.send(f"Changing prefix to `{newPrefix}`")
 
+    @commands.command()
+    async def help(self, ctx):
+        pass
+
 
 def setup(bot):
     bot.add_cog(Settings(bot))

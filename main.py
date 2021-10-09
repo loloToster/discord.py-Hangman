@@ -8,12 +8,12 @@ root = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
 def createIfNotExist(file, value):
     if not os.path.isfile(file):
         with open(file, "x") as f:
-            f.write(json.dumps(value, indent=2))
+            json.dump(value, f, indent=2)
 
 
 dataJSON = f"{root}/files/data.json"
 usedwordsJSON = f"{root}/files/usedwords.json"
-createIfNotExist(dataJSON, {"prefix": "."})
+createIfNotExist(dataJSON, {"prefix": ".", "hangman_channel": None})
 createIfNotExist(usedwordsJSON, [])
 
 
