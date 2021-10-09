@@ -66,7 +66,7 @@ class Hangman(commands.Cog):
         return string
 
     def createEmbed(self):
-        embed = Embed()
+        embed = Embed(color=65480)
         encodedWord = ""
         for letter in self.currentWord:
             encodedWord += (
@@ -90,16 +90,37 @@ class Hangman(commands.Cog):
         embed.set_footer(text=f"Attempts left: {self.attempts}")
         return embed
 
+    def allGuessed(self):
+        allGuessed = True
+        for letter in self.currentWord:
+            if letter in self.guessedLetters:
+                continue
+            allGuessed = False
+            break
+        return allGuessed
+
+    async def checkForLoss(self, ctx):
+        if self.attempts <= 0:
+            await ctx.send("", embed=self.createEmbed())
+            await ctx.send(f"The word was **{self.currentWord}**")
+            self.setDefault()
+            return True
+        return False
+
+    @commands.guild_only()
     @commands.command(aliases=["w"])
     async def word(self, ctx: commands.Context, *, word: str = None):
+        self.setDefault()
         if word:
+            if len(word) < 2:
+                return await ctx.send("Word need to have at least two letters")
             word = word.upper()
         else:
             with open(f"{root}/files/words.json") as f:
                 words = json.load(f)
             with open(f"{root}/files/usedwords.json") as f:
                 usedWords = json.load(f)
-            words = [word for word in words if not word in usedWords]
+            words = [word for word in words if not word in usedWords and len(word) > 1]
             word = random.choice(words).upper()
             usedWords.append(word)
             with open(f"{root}/files/usedwords.json", "w") as f:
@@ -108,20 +129,39 @@ class Hangman(commands.Cog):
         print(word)
         await ctx.send("", embed=self.createEmbed())
 
+    @commands.guild_only()
     @commands.command(aliases=["g"])
-    async def guess(self, ctx: commands.Context, guess: str):
+    async def guess(self, ctx: commands.Context, *, guess: str = None):
+        if not guess:
+            return await ctx.send("guess is a required argument that is missing")
+        if not self.currentWord:
+            return await ctx.send("please set the word")
         guess = guess.upper()
         if len(guess) < 2:
             self.guessedLetters.append(guess)
+            if self.allGuessed():
+                await ctx.send(
+                    f"Congratulations {ctx.author.mention}! The word was **{self.currentWord}**"
+                )
+                self.setDefault()
+                return
             if not guess in self.currentWord:
                 self.wrongLetters.append(guess)
                 self.attempts -= 1
+                if await self.checkForLoss(ctx):
+                    return
         else:
             if guess != self.currentWord:
-                return await ctx.send("That's not the word")
-            await ctx.send(f"Congratulations! The words was {self.currentWord}")
-            self.setDefault()
-            return
+                await ctx.send(f"**{guess}** is not the word")
+                self.attempts -= 1
+                if await self.checkForLoss(ctx):
+                    return
+            else:
+                await ctx.send(
+                    f"Congratulations {ctx.author.mention}! The word was **{self.currentWord}**"
+                )
+                self.setDefault()
+                return
         await ctx.send("", embed=self.createEmbed())
 
 

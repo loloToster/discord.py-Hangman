@@ -35,6 +35,11 @@ async def on_ready():
     print("Ready")
 
 
+@bot.event
+async def on_command_error(ctx, err):
+    print(err)
+
+
 tokenFile = f"{root}/files/token.txt"
 if os.path.isfile(tokenFile):
     with open(tokenFile) as f:
